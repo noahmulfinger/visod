@@ -6,7 +6,6 @@
 </template>
 
 <style lang="scss" scoped>
-#main,
 #mainMap {
   height: 100%;
   width: 100%;
