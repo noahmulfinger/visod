@@ -38,9 +38,9 @@
   pointer-events: auto;
 }
 
-#tile_18_65097_108108 {
-  z-index: 1000;
-  border: 2px dashed red;
+.tile_active {
+  z-index: 2;
+  border: 2px solid red;
 }
 .tile:hover {
   border: 2px dashed blue;

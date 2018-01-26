@@ -69,8 +69,9 @@ export default {
 
           data.hits.forEach(function(hit, i) {
             console.log('---HIT '+i);
-            console.log(hit);
-            // TODO: iterate thru hits and display only those with >= 0.75 score
+            console.log(hit.input.data.metadata.id);
+            $("#"+hit.input.data.metadata.id).addClass("tile_active");
+            // TODO: iterate thru hits and display only those with >= 0.70 score
             
           });
         },

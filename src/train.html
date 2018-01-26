@@ -18,10 +18,18 @@
     crossorigin=""></script>
     <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
     <script type="text/javascript" src="https://sdk.clarifai.com/js/clarifai-latest.js"></script>
-    <script src="../env.js"></script>
+    <script src="env.js"></script>
     <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
+<div>
+  <input type="checkbox" id="ml_flag" name="ml_flag">
+  <label for="ml_flag">ML flag</label>
+</div>
+<div>
+  <input type="checkbox" id="is_positive" name="is_positive">
+  <label for="is_positive">Is positive?</label>
+</div>
 <div id="map"></div>
 <script>
   // LAX: [33.9416, -118.4085], 18
@@ -64,13 +72,16 @@
     tile_coords = ($(this).attr('id')).split('_');
     // TODO: get concept name from user text field
     // is_positive from a checkbox
-    var concept_name = "storage_tank";
-    var is_positive = true;
-    addConcept(concept_name,is_positive,tile_coords[1],tile_coords[3],tile_coords[2]);
+    
+    if ($('#ml_flag').is(":checked")) {
+      var concept_name = "storage_tank";
+      var is_positive = $('#is_positive').is(":checked");
+      addConcept(concept_name,is_positive,tile_coords[1],tile_coords[3],tile_coords[2]);
+    }
   });
 
   function addConcept(concept_name,is_positive,z,y,x) {
-    console.log('adding input tile z:'+z+' y:'+y+' x:'+x);
+    console.log('adding input tile z:'+z+' y:'+y+' x:'+x+' for concept: '+concept_name+' is positive? '+ is_positive);
     var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
 
     app.inputs.create({
@@ -81,36 +92,12 @@
           value: is_positive
         }
       ],
-      metadata: {id: 'tile_'+z+'_'+x+'_'+y, type: 'ags', stage: env.STAGE, size: 256, src:image_url}
+      metadata: {id: 'tile_'+z+'_'+x+'_'+y, type: 'ags', stage: env.STAGE, size: 256, 
+      src:'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg'}
     }).then(
       function(response) {
         console.log(response);
         // TODO: update view with success indicator
-      },
-      function(err) {
-        console.error(err);
-      }
-    );
-  }
-  
-  function getRelatedTiles(z,y,x) {
-    console.log('fetching related tiles for tile z:'+z+' y:'+y+' x:'+x);
-    var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
-    console.log(image_url);
-    app.inputs.search(
-      {
-        input: {
-          url: image_url
-        }
-      }
-    ).then(
-      function(data) {
-        // console.log(JSON.stringify(data));
-
-        data.hits.forEach(function(hit, i) {
-          console.log('---HIT '+i);
-          console.log(hit);
-        });
       },
       function(err) {
         console.error(err);
