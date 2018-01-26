@@ -15,6 +15,12 @@
             {{ m }}
           </li>
         </ul>
+        <h5>Sample locations:</h5>
+        <ul>
+          <li v-for="(loc, index) in sample_locations" :key="index">
+            <a v-on:click="panMap(loc)">{{ loc.name }}</a>
+          </li>
+        </ul>
       </div>
       <div v-else>
         <label>

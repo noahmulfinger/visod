@@ -9,7 +9,20 @@ export default {
   data () {
     return {
       mode: "results",
-      modules: ["esri/Map", "esri/views/MapView", "esri/layers/TileLayer", "esri/identity/IdentityManager"]
+      modules: ["esri/Map", "esri/views/MapView", "esri/layers/TileLayer", "esri/identity/IdentityManager"],
+      sample_locations: [{
+        name: 'Ships',
+        location: [22.3041396, 114.1255438],
+        zoom: 18
+      }, {
+        name: 'Storage Tanks',
+        location: [30.0546231, -90.6018915],
+        zoom: 18
+      }, {
+        name: 'Pivot Irrigation',
+        location: [22.6903733, 28.3971836],
+        zoom: 15
+      }]
     };
   },
   mounted () {
@@ -18,7 +31,8 @@ export default {
      apiKey: env.CLARIFAI_TOKEN
     });
 
-    var map = L.map('mapView').setView([22.3041396,114.1255438,576], 18);
+    var map = L.map('mapView').setView(this.sample_locations[2].location, this.sample_locations[2].zoom);
+    window.map = map;
     esri.tiledMapLayer({
       url: "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?token="+env.ESRI_APP_TOKEN
     }).addTo(map);
@@ -208,6 +222,9 @@ export default {
   methods: {
     switchMode: function (m) {
       this.mode = m;
+    },
+    panMap: function(loc) {
+      window.map.setView(loc.location, loc.zoom)
     }
   }
 }
