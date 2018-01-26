@@ -1,10 +1,12 @@
 <template>
   <div class="wrapper">
     <div class="side-bar-container">
+
       <div class="header">
-        <nav class="leader-1">
-          <a href="#" class="btn btn-grouped" v-on:click="switchMode('results')">SEARCH</a>
-          <a href="#" class="btn btn-grouped" v-on:click="switchMode('train')">TRAIN</a>
+      <h1>VSOD</h1>
+        <nav>
+          <a href="#" class="btn btn-grouped icon-ui-search btn-half" v-on:click="switchMode('results')">SEARCH</a>
+          <a href="#" class="btn btn-grouped icon-ui-applications btn-half" v-on:click="switchMode('train')">TRAIN</a>
         </nav>
       </div>
       <div>
@@ -21,6 +23,7 @@
       <div v-else>
         Training mode goes here
       </div>
+      <div class="esri-logo modifier-class"></div>
     </div>
     <div class="map-container">
       <div id="mapView">
