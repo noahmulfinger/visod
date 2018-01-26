@@ -9,10 +9,6 @@
           <a href="#" class="btn btn-grouped icon-ui-applications btn-half" v-on:click="switchMode('train')">TRAIN</a>
         </nav>
       </div>
-      <div>
-        <input type="checkbox" id="ml_flag" name="ml_flag">
-        <label for="ml_flag">ML flag</label>
-      </div>
       <div v-if="mode === 'results'">
         <ul>
           <li v-for="(m, index) in modules" :key="index">
@@ -26,6 +22,11 @@
           <input type="text" placeholder="ie. storage_tank" id="object_name" required>
         </label>
         <label><input type="checkbox" id="is_positive">Is positive?</label>
+      </div>
+
+      <div>
+        <input type="checkbox" id="view_mode" name="view_mode" checked>
+        <label for="view_mode">View mode</label>
       </div>
       <div class="esri-logo modifier-class"></div>
     </div>
