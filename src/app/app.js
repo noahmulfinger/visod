@@ -8,8 +8,8 @@ import * as $ from "jquery";
 export default {
   data () {
     return {
-      modules: ["esri/Map", "esri/views/MapView", "esri/layers/TileLayer", "esri/identity/IdentityManager"],
-
+      mode: "results",
+      modules: ["esri/Map", "esri/views/MapView", "esri/layers/TileLayer", "esri/identity/IdentityManager"]
     };
   },
   mounted () {
@@ -45,11 +45,17 @@ export default {
      apiKey: env.CLARIFAI_TOKEN
     });
 
+    const self = this;
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
-
-      if ($('#ml_flag').is(":checked")) {
+      if (self.mode === "results" && $('#ml_flag').is(":checked")) {
         getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
+      } else {
+        // TODO: get concept name from user text field
+        // is_positive from a checkbox
+        var concept_name = "storage_tank";
+        var is_positive = true;
+        addConcept(concept_name,is_positive,tile_coords[1],tile_coords[3],tile_coords[2]);
       }
     });
 
@@ -72,8 +78,32 @@ export default {
             console.log(hit.input.data.metadata.id);
             $("#"+hit.input.data.metadata.id).addClass("tile_active");
             // TODO: iterate thru hits and display only those with >= 0.70 score
-            
+
           });
+        },
+        function(err) {
+          console.error(err);
+        }
+      );
+    }
+
+    function addConcept(concept_name,is_positive,z,y,x) {
+      console.log('adding input tile z:'+z+' y:'+y+' x:'+x);
+      var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
+
+      app.inputs.create({
+        url: image_url,
+        concepts: [
+          {
+            id: concept_name,
+            value: is_positive
+          }
+        ],
+        metadata: {id: 'tile_'+z+'_'+x+'_'+y, type: 'ags', stage: env.STAGE, size: 256, src:image_url}
+      }).then(
+        function(response) {
+          console.log(response);
+          // TODO: update view with success indicator
         },
         function(err) {
           console.error(err);
@@ -82,6 +112,9 @@ export default {
     }
   },
   methods: {
+    switchMode: function (m) {
+      this.mode = m;
+    }
     // getRelatedTiles (z,y,x) {
     //   console.log('fetching related tiles for tile z:'+z+' y:'+y+' x:'+x);
     //   var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN

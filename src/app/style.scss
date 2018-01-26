@@ -24,6 +24,15 @@
 .header {
   text-align: left;
   padding: 10px;
+  display: flex;
+}
+
+.results-header {
+  flex: 1 50%;
+}
+
+.train-header {
+  flex: 1 50%;
 }
 
 // body { margin:0; padding:0; }
