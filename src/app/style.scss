@@ -9,7 +9,20 @@
 }
 
 .side-bar-container {
-  flex: 1 50%;
+  flex: 1 20%;
+  border-right: 1px solid #a9a9a9;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+  color: #4c4c4c;
+  vertical-align: baseline;
+  outline: none;
+  outline-offset: 0;
+  background-color: #ffffff;
+  -webkit-transition: border-color 150ms linear;
+  transition: border-color 150ms linear;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
 }
 
 .map-container {
