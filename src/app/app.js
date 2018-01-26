@@ -22,7 +22,10 @@ export default {
         name: 'Pivot Irrigation',
         location: [22.6903733, 28.3971836],
         zoom: 15
-      }]
+      }],
+      map_curr_zoom: 18,
+      active_tile_cache: [],
+      inactive_tile_cache: []
     };
   },
   mounted () {
@@ -30,15 +33,14 @@ export default {
     const app = new Clarifai.App({
      apiKey: env.CLARIFAI_TOKEN
     });
+    const self = this;
 
-    var map = L.map('mapView').setView(this.sample_locations[2].location, this.sample_locations[2].zoom);
+    var map = L.map('mapView').setView(this.sample_locations[0].location, this.sample_locations[0].zoom);
+    self.map_curr_zoom = map.getZoom();
     window.map = map;
     esri.tiledMapLayer({
       url: "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?token="+env.ESRI_APP_TOKEN
     }).addTo(map);
-
-    var active_tile_cache = []
-    var inactive_tile_cache = []
 
     // create & add gridlayer
     L.GridLayer.GridDebug = L.GridLayer.extend({
@@ -50,12 +52,18 @@ export default {
         tile.setAttribute("id", tile_id);
         // tile.innerHTML = coords_id
 
-        if (active_tile_cache.includes(tile_id)) {
-          tile.classList.add("tile_active");
-        } else if (active_tile_cache.length > 0 && !inactive_tile_cache.includes(tile_id)) {
-          // not in either caches, run predict/inference on this unseen tile
-          // should be optimized to a worker queue
-          predictTile(coords.z, coords.y, coords.x);
+        if (self.mode === "results") {
+          if (self.active_tile_cache.includes(tile_id)) {
+            tile.classList.add("tile_active");
+          } else if (self.active_tile_cache.length > 0 && !self.inactive_tile_cache.includes(tile_id)) {
+            // not in either caches then run predict/inference on this unseen tile
+            // should be optimized to a worker queue
+            predictTile(coords.z, coords.y, coords.x);
+          }
+        } else {
+          if (self.active_tile_cache.includes(tile_id)) {
+            tile.classList.add("tile_active_train");
+          }
         }
         return tile;
       },
@@ -64,14 +72,14 @@ export default {
       return new L.GridLayer.GridDebug(opts);
     };
     var grid_layer = L.gridLayer.gridDebug();
-    map.addLayer(grid_layer);
-
-    const self = this;
+    window.grid_layer = grid_layer;
+    
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
       if ($('#view_mode').is(":checked")) {
         return;
       }
+      
       if (self.mode === "results") {
         // getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
         
@@ -91,6 +99,19 @@ export default {
       }
     });
 
+    $('#view_mode').change(function() {
+      if($(this).is(":checked")) {
+        map.removeLayer(window.grid_layer);
+      } else {
+        window.grid_layer = L.gridLayer.gridDebug();
+        map.addLayer(window.grid_layer);
+      }
+    });
+
+    map.on("zoomend", function(){
+      self.map_curr_zoom = map.getZoom();
+    });
+
     $(document).keypress(function(e) {
       if(e.which == 13) { 
         $('#view_mode').prop('checked', !$('#view_mode').prop("checked"));
@@ -100,7 +121,7 @@ export default {
     function getRelatedTiles (z,y,x) {
       // enable view mode
       $('#view_mode').prop('checked', true);
-      clearCache();
+      self.clearCache();
 
       var image_url = tileCoords2Url(z,y,x);
       console.log(image_url);
@@ -123,7 +144,7 @@ export default {
             
             // highlight the hit tiles & cache them
             $("#"+hit.input.data.metadata.id).addClass("tile_active");
-            active_tile_cache.push(hit.input.data.metadata.id)
+            self.active_tile_cache.push(hit.input.data.metadata.id)
           });
         },
         function(err) {
@@ -133,7 +154,8 @@ export default {
     }
 
     function addConcept(concept_name,is_positive,z,y,x) {
-      console.log('adding input tile z:'+z+' y:'+y+' x:'+x);
+      // console.log('adding input tile z:'+z+' y:'+y+' x:'+x);
+      var tile_id = 'tile_'+z+'_'+x+'_'+y;
       var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg'
       var image_url_w_token = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
 
@@ -149,7 +171,8 @@ export default {
       }).then(
         function(response) {
           console.log(response);
-          // TODO: update view with success indicator
+          $("#"+tile_id).addClass("tile_active_train");
+          self.active_tile_cache.push(tile_id);
         },
         function(err) {
           console.error(err);
@@ -160,7 +183,7 @@ export default {
     function predictTile(z,y,x) {
       var tile_id = 'tile_'+z+'_'+x+'_'+y;
       var tile_url = tileCoords2Url(z,y,x)
-      app.models.predict("dev1", [tile_url]).then(
+      app.models.predict(env.MODEL_ID, [tile_url]).then(
         function(response) {
           response.outputs.forEach(function(output, i) {
             console.log('---PREDICTION '+i+' --'+tile_id+'--'+tile_url);
@@ -169,9 +192,9 @@ export default {
             if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
               // highlight the inferred tiles & cache them
               $("#"+tile_id).addClass("tile_active");
-              active_tile_cache.push(tile_id);
+              self.active_tile_cache.push(tile_id);
             } else {
-              inactive_tile_cache.push(tile_id);
+              self.inactive_tile_cache.push(tile_id);
             }
           });
         },
@@ -183,9 +206,9 @@ export default {
 
     function predict(tile_ids, tile_urls) {
       $('#view_mode').prop('checked', true);
-      clearCache();
+      self.clearCache();
 
-      app.models.predict("dev1", tile_urls).then(
+      app.models.predict(env.MODEL_ID, tile_urls).then(
         function(response) {
           console.log(response);
 
@@ -193,12 +216,13 @@ export default {
             console.log('---PREDICTION '+i+' --'+tile_ids[i]+'--'+tile_urls[i]);
             console.log(output);
 
-            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
+            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7
+                || output.data.concepts[2].value >= 0.7) {
               // highlight the inferred tiles & cache them
               $("#"+tile_ids[i]).addClass("tile_active");
-              active_tile_cache.push(tile_ids[i]);
+              self.active_tile_cache.push(tile_ids[i]);
             } else {
-              inactive_tile_cache.push(tile_ids[i]);
+              self.inactive_tile_cache.push(tile_ids[i]);
             }
           });
         },
@@ -211,20 +235,22 @@ export default {
     function tileCoords2Url(z,y,x) {
       return 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN;
     }
-
-    function clearCache() {
-      // clear the cache as we get results for a new root tile
-      active_tile_cache = []
-      inactive_tile_cache = []
-      $('.tile').removeClass('tile_active');
-    }
   },
   methods: {
-    switchMode: function (m) {
+    switchMode: function(m) {
       this.mode = m;
+      this.clearCache();
     },
     panMap: function(loc) {
       window.map.setView(loc.location, loc.zoom)
+      // this.map_curr_zoom = window.map.getZoom();
+    },
+    clearCache: function() {
+      // clear the cache as we get results for a new root tile
+      this.active_tile_cache = []
+      this.inactive_tile_cache = []
+      $('.tile').removeClass('tile_active');
+      $('.tile').removeClass('tile_active_train');
     }
   }
 }

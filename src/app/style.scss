@@ -9,7 +9,7 @@
 }
 
 .side-bar-container {
-  flex: 1 25%;
+  flex: 1 24%;
   border-right: 1px solid #a9a9a9;
   box-sizing: border-box;
   font-family: inherit;
@@ -65,8 +65,13 @@
   border: 2px solid red;
   border-radius: 25px;
 }
+.tile_active_train {
+  z-index: 2;
+  border: 2px solid green;
+  border-radius: 25px;
+}
 .tile:hover {
-  border: 2px dashed white;
+  border: 4px dashed white;
 }
 
 .clear {

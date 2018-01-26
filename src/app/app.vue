@@ -23,6 +23,7 @@
         </ul>
       </div>
       <div v-else>
+        <label> Current zoom: {{map_curr_zoom}} </label>
         <label>
           Object name
           <input type="text" placeholder="ie. storage_tank" id="object_name" required>
@@ -30,10 +31,10 @@
         <label><input type="checkbox" id="is_positive">Is positive?</label>
       </div>
 
-      <div>
+      <h5>
         <input type="checkbox" id="view_mode" name="view_mode" checked>
         <label for="view_mode">View mode</label>
-      </div>
+      </h5>
       <div class="esri-logo modifier-class"></div>
     </div>
     <div class="map-container">
