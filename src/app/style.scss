@@ -1,0 +1,47 @@
+@import url("https://js.arcgis.com/4.6/esri/css/main.css");
+@import url("https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.0.0-rc.8/css/calcite-web.min.css");
+@import url("https://unpkg.com/leaflet@1.2.0/dist/leaflet.css");
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-flow: row;
+}
+
+.side-bar-container {
+  flex: 1 50%;
+}
+
+.map-container {
+  flex: 1 100%;
+}
+
+#mapView {
+  height: 100%;
+  width: 100%;
+}
+
+.header {
+  text-align: left;
+  padding: 10px;
+}
+
+// body { margin:0; padding:0; }
+
+// #map { position: absolute; top:0; bottom:0; right:0; left:0; }
+
+.tile {
+  font: bold 20px serif;
+  border: 1px dashed grey;
+  z-index: -1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#tile_18_65097_108108 {
+  z-index: 1000;
+  border: 2px dashed red;
+}
+.tile:hover {
+  border: 2px dashed blue;
+}
