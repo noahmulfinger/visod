@@ -48,7 +48,10 @@ export default {
     const self = this;
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
-      if (self.mode === "results" && $('#ml_flag').is(":checked")) {
+      if (!$('#ml_flag').is(":checked")) {
+        return;
+      }
+      if (self.mode === "results") {
         getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
       } else {
         // TODO: get concept name from user text field
