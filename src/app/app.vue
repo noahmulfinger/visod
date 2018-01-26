@@ -18,10 +18,11 @@
         </ul>
         <h5>Search results: {{searchResults.length}}</h5>
         <div class="block-group block-group-3-up">
-        <div class="column-1" v-for="(m, index) in searchResults" :key="index">
-          <img :src="m.image_url" height="50" width="50">
+          <div class="column-1" v-for="(m, index) in searchResults" :key="index">
+            <img :src="m.image_url" height="50" width="50">
+          </div>
         </div>
-        </div>
+        <a href="#" class="btn icon-ui-documentation btn-fill" v-on:click="createGeojson()">Export GeoJSON</a>
       </div>
       <div v-else>
         <label>

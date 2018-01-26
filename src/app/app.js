@@ -50,7 +50,14 @@ export default {
         var coords_id = [coords.z, coords.x, coords.y].join('_');
         var tile_id = "tile_"+coords_id;
         tile.setAttribute("id", tile_id);
-        // tile.innerHTML = coords_id
+        tile.innerHTML = coords_id
+        
+        // calculate lat/long
+        var nwPoint = coords.scaleBy(this.getTileSize());
+        var nw = map.unproject(nwPoint, coords.z)
+        tile.setAttribute("lat", nw.lat);
+        tile.setAttribute("lng", nw.lng);
+        // console.log('tile: '+coords_id+ ' lat: '+nw.lat+' lng: '+nw.lng);
 
         if (self.mode === "results") {
           if (self.active_tile_cache.includes(tile_id)) {
@@ -124,7 +131,6 @@ export default {
       self.clearCache();
 
       var image_url = tileCoords2Url(z,y,x);
-      console.log(image_url);
       
       // fetch visually similar tiles
       app.inputs.search(
@@ -139,8 +145,8 @@ export default {
           // console.log(JSON.stringify(data));
 
           data.hits.forEach(function(hit, i) {
-            console.log('---HIT '+i);
-            console.log(hit.input.data.metadata.id);
+            // console.log('---HIT '+i);
+            // console.log(hit.input.data.metadata.id);
             
             // highlight the hit tiles & cache them
             $("#"+hit.input.data.metadata.id).addClass("tile_active");
@@ -185,9 +191,10 @@ export default {
       var tile_url = tileCoords2Url(z,y,x)
       app.models.predict(env.MODEL_ID, [tile_url]).then(
         function(response) {
+          console.log(response);
           response.outputs.forEach(function(output, i) {
-            console.log('---PREDICTION '+i+' --'+tile_id+'--'+tile_url);
-            console.log(output);
+            // console.log('---PREDICTION '+i+' --'+tile_id+'--'+tile_url);
+            // console.log(output);
 
             if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
               // highlight the inferred tiles & cache them
@@ -195,7 +202,9 @@ export default {
               self.active_tile_cache.push(tile_id);
               self.searchResults.push({
                 image_url: tile_url,
-                tile_id: tile_id
+                tile_id: tile_id,
+                latitude: $("#"+tile_id).attr('lat'),
+                longitude: $("#"+tile_id).attr('lng'),
               })
             } else {
               self.inactive_tile_cache.push(tile_id);
@@ -217,8 +226,8 @@ export default {
           console.log(response);
 
           response.outputs.forEach(function(output, i) {
-            console.log('---PREDICTION '+i+' --'+tile_ids[i]+'--'+tile_urls[i]);
-            console.log(output);
+            // console.log('---PREDICTION '+i+' --'+tile_ids[i]+'--'+tile_urls[i]);
+            // console.log(output);
 
             if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7
                 || output.data.concepts[2].value >= 0.7) {
@@ -227,7 +236,9 @@ export default {
               self.active_tile_cache.push(tile_ids[i]);
               self.searchResults.push({
                 image_url: tile_urls[i],
-                tile_id: tile_ids[i]
+                tile_id: tile_ids[i],
+                latitude: $("#"+tile_ids[i]).attr('lat'),
+                longitude: $("#"+tile_ids[i]).attr('lng'),
               })
             } else {
               self.inactive_tile_cache.push(tile_ids[i]);
@@ -262,6 +273,33 @@ export default {
       this.searchResults = []
       $('.tile').removeClass('tile_active');
       $('.tile').removeClass('tile_active_train');
+    },
+    createGeojson: function() {
+      var featureCollection = {
+        "type": "FeatureCollection",
+        "features": []
+      }
+
+      this.searchResults.forEach(function(feature, i) {
+        var j = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+              "type": "Point",
+              "coordinates": [Number(feature.longitude), Number(feature.latitude)]
+            }
+          };
+        featureCollection.features.push(j);
+      });
+      return this.downloadObject(featureCollection,'geojson');
+    },
+    downloadObject: function(exportObj, exportName) {
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+      var downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href",     dataStr);
+      downloadAnchorNode.setAttribute("download", exportName + ".json");
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
     }
   }
 }
