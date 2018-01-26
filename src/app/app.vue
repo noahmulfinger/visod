@@ -9,6 +9,10 @@
           <h1 class="result-title trailer-0">Train</h1>
         </div>
       </div>
+      <div>
+        <input type="checkbox" id="ml_flag" name="ml_flag">
+        <label for="ml_flag">ML flag</label>
+      </div>
       <div v-if="mode === 'results'">
       <ul>
         <li v-for="(m, index) in modules" :key="index">
@@ -18,10 +22,7 @@
       </div>
       <div v-else>
         Training mode goes here
-        <div>
-          <input type="checkbox" id="ml_flag" name="ml_flag">
-          <label for="ml_flag">ML flag</label>
-      </div>
+
       </div>
 
 
