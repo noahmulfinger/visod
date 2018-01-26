@@ -14,7 +14,7 @@ export default {
   },
   mounted () {
     // loadModules(this.modules).then(this.createMap);
-    var map = L.map('mapView').setView([30.0546231,-90.6018915], 18);
+    var map = L.map('mapView').setView([22.3041396,114.1255438,576], 18);
     esri.tiledMapLayer({
       url: "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?token="+env.ESRI_APP_TOKEN
     }).addTo(map);
@@ -56,10 +56,16 @@ export default {
       } else {
         // TODO: get concept name from user text field
         // is_positive from a checkbox
-        var concept_name = "storage_tank";
-        var is_positive = true;
+        var concept_name = $("#object_name").val();
+        var is_positive = $('#is_positive').is(":checked");
         addConcept(concept_name,is_positive,tile_coords[1],tile_coords[3],tile_coords[2]);
       }
+    });
+
+    $(document).keypress(function(e) {
+      if(e.which === 13) { 
+        $('#ml_flag').prop('checked', !$('#ml_flag').prop("checked"));
+      } 
     });
 
     function getRelatedTiles (z,y,x) {
@@ -69,8 +75,9 @@ export default {
       app.inputs.search(
         {
           input: {
-            url: image_url
-          }
+            url: image_url,
+          },
+          perPage: 50
         }
       ).then(
         function(data) {

@@ -21,7 +21,11 @@
         </ul>
       </div>
       <div v-else>
-        Training mode goes here
+        <label>
+          Object name
+          <input type="text" placeholder="ie. storage_tank" id="object_name" required>
+        </label>
+        <label><input type="checkbox" id="is_positive">Is positive?</label>
       </div>
       <div class="esri-logo modifier-class"></div>
     </div>
