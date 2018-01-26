@@ -10,31 +10,32 @@
         </nav>
       </div>
       <div v-if="mode === 'results'">
-        <ul>
-          <li v-for="(m, index) in modules" :key="index">
-            {{ m }}
-          </li>
-        </ul>
         <h5>Sample locations:</h5>
         <ul>
           <li v-for="(loc, index) in sample_locations" :key="index">
             <a v-on:click="panMap(loc)">{{ loc.name }}</a>
           </li>
         </ul>
+        <h5>Search results: {{searchResults.length}}</h5>
+        <div class="block-group block-group-3-up">
+        <div class="column-1" v-for="(m, index) in searchResults" :key="index">
+          <img :src="m.image_url" height="50" width="50">
+        </div>
+        </div>
       </div>
       <div v-else>
-        <label> Current zoom: {{map_curr_zoom}} </label>
         <label>
           Object name
           <input type="text" placeholder="ie. storage_tank" id="object_name" required>
         </label>
         <label><input type="checkbox" id="is_positive">Is positive?</label>
       </div>
-
+      <hr />
       <h5>
         <input type="checkbox" id="view_mode" name="view_mode" checked>
         <label for="view_mode">View mode</label>
       </h5>
+      <label> Current zoom: {{map_curr_zoom}} </label>
       <div class="esri-logo modifier-class"></div>
     </div>
     <div class="map-container">

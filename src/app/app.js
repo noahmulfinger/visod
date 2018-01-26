@@ -9,7 +9,7 @@ export default {
   data () {
     return {
       mode: "results",
-      modules: ["esri/Map", "esri/views/MapView", "esri/layers/TileLayer", "esri/identity/IdentityManager"],
+      searchResults: [],
       sample_locations: [{
         name: 'Ships',
         location: [22.3041396, 114.1255438],
@@ -73,7 +73,7 @@ export default {
     };
     var grid_layer = L.gridLayer.gridDebug();
     window.grid_layer = grid_layer;
-    
+
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
       if ($('#view_mode').is(":checked")) {
@@ -193,6 +193,10 @@ export default {
               // highlight the inferred tiles & cache them
               $("#"+tile_id).addClass("tile_active");
               self.active_tile_cache.push(tile_id);
+              self.searchResults.push({
+                image_url: tile_url,
+                tile_id: tile_id
+              })
             } else {
               self.inactive_tile_cache.push(tile_id);
             }
@@ -221,6 +225,10 @@ export default {
               // highlight the inferred tiles & cache them
               $("#"+tile_ids[i]).addClass("tile_active");
               self.active_tile_cache.push(tile_ids[i]);
+              self.searchResults.push({
+                image_url: tile_urls[i],
+                tile_id: tile_ids[i]
+              })
             } else {
               self.inactive_tile_cache.push(tile_ids[i]);
             }
@@ -242,13 +250,16 @@ export default {
       this.clearCache();
     },
     panMap: function(loc) {
+      $('#view_mode').prop('checked', true);
+      window.map.removeLayer(window.grid_layer);
+      this.clearCache();
       window.map.setView(loc.location, loc.zoom)
-      // this.map_curr_zoom = window.map.getZoom();
     },
     clearCache: function() {
       // clear the cache as we get results for a new root tile
       this.active_tile_cache = []
       this.inactive_tile_cache = []
+      this.searchResults = []
       $('.tile').removeClass('tile_active');
       $('.tile').removeClass('tile_active_train');
     }
