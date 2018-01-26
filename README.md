@@ -1,8 +1,15 @@
-# VSOD
+# sky-insight
 
-> A Vue.js project
+![Preview](src/assets/title.jpg)
+![Preview](src/assets/preview.png)
 
-## Build Setup
+Easily train machine learning models using satellite/aerial imagery & ArcGIS.
+
+Enrich your existing GIS data with real world planetary data in near realtime ML models.
+
+Monitor the physical world with ease using automation & image classification.
+
+## Build & Run
 
 ``` bash
 # install dependencies

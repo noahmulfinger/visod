@@ -25,7 +25,8 @@ export default {
       }],
       map_curr_zoom: 18,
       active_tile_cache: [],
-      inactive_tile_cache: []
+      inactive_tile_cache: [],
+      ml_model_id: ''
     };
   },
   mounted () {
@@ -35,6 +36,7 @@ export default {
     });
     const self = this;
 
+    self.ml_model_id = env.MODEL_ID;
     var map = L.map('mapView').setView(this.sample_locations[0].location, this.sample_locations[0].zoom);
     self.map_curr_zoom = map.getZoom();
     window.map = map;
@@ -50,7 +52,6 @@ export default {
         var coords_id = [coords.z, coords.x, coords.y].join('_');
         var tile_id = "tile_"+coords_id;
         tile.setAttribute("id", tile_id);
-        tile.innerHTML = coords_id
         
         // calculate lat/long
         var nwPoint = coords.scaleBy(this.getTileSize());
@@ -58,6 +59,7 @@ export default {
         tile.setAttribute("lat", nw.lat);
         tile.setAttribute("lng", nw.lng);
         // console.log('tile: '+coords_id+ ' lat: '+nw.lat+' lng: '+nw.lng);
+        tile.innerHTML = coords.z+", "+coords.y+", "+coords.x+"<br/>"+nw.lat+", "+nw.lng;
 
         if (self.mode === "results") {
           if (self.active_tile_cache.includes(tile_id)) {

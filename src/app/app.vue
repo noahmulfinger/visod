@@ -3,7 +3,7 @@
     <div class="side-bar-container">
 
       <div class="header">
-      <h1>VSOD</h1>
+      <h1>sky-insight</h1>
         <nav>
           <a href="#" class="btn btn-grouped icon-ui-search btn-half" v-on:click="switchMode('results')">SEARCH</a>
           <a href="#" class="btn btn-grouped icon-ui-applications btn-half" v-on:click="switchMode('train')">TRAIN</a>
@@ -31,7 +31,7 @@
       <div v-else>
         <label>
           Object name
-          <input type="text" placeholder="ie. storage_tank" id="object_name" required>
+          <input type="text" placeholder="ie. pivot_irrigation" id="object_name" required>
         </label>
         <label><input type="checkbox" id="is_positive">Is positive?</label>
       </div>
@@ -40,7 +40,8 @@
         <input type="checkbox" id="view_mode" name="view_mode" checked>
         <label for="view_mode">View mode</label>
       </h5>
-      <label> Current zoom: {{map_curr_zoom}} </label>
+      <label>Current zoom: {{map_curr_zoom}} </label>
+      <label>Model: {{ml_model_id}} </label>
       <div class="esri-logo modifier-class"></div>
     </div>
     <div class="map-container">
