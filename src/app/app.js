@@ -14,12 +14,17 @@ export default {
   },
   mounted () {
     // loadModules(this.modules).then(this.createMap);
+    const app = new Clarifai.App({
+     apiKey: env.CLARIFAI_TOKEN
+    });
+
     var map = L.map('mapView').setView([22.3041396,114.1255438,576], 18);
     esri.tiledMapLayer({
       url: "https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?token="+env.ESRI_APP_TOKEN
     }).addTo(map);
 
     var active_tile_cache = []
+    var inactive_tile_cache = []
 
     // create & add gridlayer
     L.GridLayer.GridDebug = L.GridLayer.extend({
@@ -33,8 +38,11 @@ export default {
 
         if (active_tile_cache.includes(tile_id)) {
           tile.classList.add("tile_active");
+        } else if (active_tile_cache.length > 0 && !inactive_tile_cache.includes(tile_id)) {
+          // not in either caches, run predict/inference on this unseen tile
+          // should be optimized to a worker queue
+          predictTile(coords.z, coords.y, coords.x);
         }
-        //console.log([coords.z, coords.y, coords.x].join('/'));
         return tile;
       },
     });
@@ -44,10 +52,6 @@ export default {
     var grid_layer = L.gridLayer.gridDebug();
     map.addLayer(grid_layer);
 
-    const app = new Clarifai.App({
-     apiKey: env.CLARIFAI_TOKEN
-    });
-
     const self = this;
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
@@ -56,7 +60,16 @@ export default {
       }
       if (self.mode === "results") {
         // getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
-        predict(tile_coords[1],tile_coords[3],tile_coords[2]);
+        
+        // iterate over all tiles and call predict
+        var inference_tile_ids = []
+        var inference_tile_urls = []
+        $('.tile').each(function(i, tile) {
+          tile_coords = ($(tile).attr('id')).split('_');
+          inference_tile_ids.push($(tile).attr('id'))
+          inference_tile_urls.push(tileCoords2Url(tile_coords[1],tile_coords[3],tile_coords[2]));
+        });
+        predict(inference_tile_ids,inference_tile_urls);
       } else {
         var concept_name = $("#object_name").val();
         var is_positive = $('#is_positive').is(":checked");
@@ -73,10 +86,7 @@ export default {
     function getRelatedTiles (z,y,x) {
       // enable view mode
       $('#view_mode').prop('checked', true);
-
-      // clear the cache as we get results for a new root tile
-      active_tile_cache = []
-      $('.tile').removeClass('tile_active');
+      clearCache();
 
       var image_url = tileCoords2Url(z,y,x);
       console.log(image_url);
@@ -133,14 +143,50 @@ export default {
       );
     }
 
-    function predict(z,y,x) {
-      $('#view_mode').prop('checked', true);
-
-      app.models.predict("dev1", [tileCoords2Url(z,y,x)]).then(
+    function predictTile(z,y,x) {
+      var tile_id = 'tile_'+z+'_'+x+'_'+y;
+      var tile_url = tileCoords2Url(z,y,x)
+      app.models.predict("dev1", [tile_url]).then(
         function(response) {
-          // console.log(response);
-          console.log(response.outputs[0].data.concepts[0]);
-          console.log(response.outputs[0].data.concepts[1]);
+          response.outputs.forEach(function(output, i) {
+            console.log('---PREDICTION '+i+' --'+tile_id+'--'+tile_url);
+            console.log(output);
+
+            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
+              // highlight the inferred tiles & cache them
+              $("#"+tile_id).addClass("tile_active");
+              active_tile_cache.push(tile_id);
+            } else {
+              inactive_tile_cache.push(tile_id);
+            }
+          });
+        },
+        function(err) {
+          console.error(err);
+        }
+      );
+    }
+
+    function predict(tile_ids, tile_urls) {
+      $('#view_mode').prop('checked', true);
+      clearCache();
+
+      app.models.predict("dev1", tile_urls).then(
+        function(response) {
+          console.log(response);
+
+          response.outputs.forEach(function(output, i) {
+            console.log('---PREDICTION '+i+' --'+tile_ids[i]+'--'+tile_urls[i]);
+            console.log(output);
+
+            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
+              // highlight the inferred tiles & cache them
+              $("#"+tile_ids[i]).addClass("tile_active");
+              active_tile_cache.push(tile_ids[i]);
+            } else {
+              inactive_tile_cache.push(tile_ids[i]);
+            }
+          });
         },
         function(err) {
           console.error(err);
@@ -150,6 +196,13 @@ export default {
 
     function tileCoords2Url(z,y,x) {
       return 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN;
+    }
+
+    function clearCache() {
+      // clear the cache as we get results for a new root tile
+      active_tile_cache = []
+      inactive_tile_cache = []
+      $('.tile').removeClass('tile_active');
     }
   },
   methods: {
