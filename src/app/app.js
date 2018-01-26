@@ -29,7 +29,7 @@ export default {
         var coords_id = [coords.z, coords.x, coords.y].join('_');
         var tile_id = "tile_"+coords_id;
         tile.setAttribute("id", tile_id);
-        tile.innerHTML = coords_id
+        // tile.innerHTML = coords_id
 
         if (active_tile_cache.includes(tile_id)) {
           tile.classList.add("tile_active");
@@ -55,7 +55,8 @@ export default {
         return;
       }
       if (self.mode === "results") {
-        getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
+        // getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
+        predict(tile_coords[1],tile_coords[3],tile_coords[2]);
       } else {
         var concept_name = $("#object_name").val();
         var is_positive = $('#is_positive').is(":checked");
@@ -77,7 +78,7 @@ export default {
       active_tile_cache = []
       $('.tile').removeClass('tile_active');
 
-      var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
+      var image_url = tileCoords2Url(z,y,x);
       console.log(image_url);
       
       // fetch visually similar tiles
@@ -109,10 +110,11 @@ export default {
 
     function addConcept(concept_name,is_positive,z,y,x) {
       console.log('adding input tile z:'+z+' y:'+y+' x:'+x);
-      var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
+      var image_url = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg'
+      var image_url_w_token = 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN
 
       app.inputs.create({
-        url: image_url,
+        url: image_url_w_token,
         concepts: [
           {
             id: concept_name,
@@ -129,6 +131,25 @@ export default {
           console.error(err);
         }
       );
+    }
+
+    function predict(z,y,x) {
+      $('#view_mode').prop('checked', true);
+
+      app.models.predict("dev1", [tileCoords2Url(z,y,x)]).then(
+        function(response) {
+          // console.log(response);
+          console.log(response.outputs[0].data.concepts[0]);
+          console.log(response.outputs[0].data.concepts[1]);
+        },
+        function(err) {
+          console.error(err);
+        }
+      );
+    }
+
+    function tileCoords2Url(z,y,x) {
+      return 'https://tiledbasemaps.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/'+z+'/'+y+'/'+x+'/current.jpg?token='+env.ESRI_APP_TOKEN;
     }
   },
   methods: {
