@@ -9,6 +9,12 @@
           {{ module }}
         </li>
       </ul>
+
+      <div>
+        <input type="checkbox" id="ml_flag" name="ml_flag">
+        <label for="ml_flag">ML flag</label>
+      </div>
+
     </div>
     <div class="map-container">
       <div id="mapView">

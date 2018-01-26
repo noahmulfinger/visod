@@ -47,7 +47,10 @@ export default {
 
     $('#mapView').on('click', '.tile', function () {
       var tile_coords = ($(this).attr('id')).split('_');
-      getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
+
+      if ($('#ml_flag').is(":checked")) {
+        getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
+      }
     });
 
     function getRelatedTiles (z,y,x) {
@@ -67,6 +70,8 @@ export default {
           data.hits.forEach(function(hit, i) {
             console.log('---HIT '+i);
             console.log(hit);
+            // TODO: iterate thru hits and display only those with >= 0.75 score
+            
           });
         },
         function(err) {
