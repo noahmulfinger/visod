@@ -22,7 +22,11 @@
             <img :src="m.image_url" height="50" width="50">
           </div>
         </div>
-        <a href="#" class="btn icon-ui-documentation btn-fill" v-on:click="createGeojson()">Export GeoJSON</a>
+        <nav>
+          <a href="#" class="btn btn-clear btn-grouped icon-ui-download btn-half" v-on:click="createGeojson()">GeoJSON</a>
+          <a href="#" class="btn btn-clear btn-grouped icon-ui-documentation btn-half" v-on:click="createEsriFeatureSet()">FeatureSet</a>
+        </nav>
+        
       </div>
       <div v-else>
         <label>

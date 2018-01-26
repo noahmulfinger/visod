@@ -88,8 +88,6 @@ export default {
       }
       
       if (self.mode === "results") {
-        // getRelatedTiles(tile_coords[1],tile_coords[3],tile_coords[2]);
-        
         // iterate over all tiles and call predict
         var inference_tile_ids = []
         var inference_tile_urls = []
@@ -195,8 +193,16 @@ export default {
           response.outputs.forEach(function(output, i) {
             // console.log('---PREDICTION '+i+' --'+tile_id+'--'+tile_url);
             // console.log(output);
+            
+            // find an accurate concept classification
+            var concept_name = undefined;
+            output.data.concepts.forEach(function(concept, j) {
+              if (concept.value >= 0.7 ) {
+                concept_name = concept.name
+              }
+            });
 
-            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7) {
+            if (concept_name) {
               // highlight the inferred tiles & cache them
               $("#"+tile_id).addClass("tile_active");
               self.active_tile_cache.push(tile_id);
@@ -205,7 +211,8 @@ export default {
                 tile_id: tile_id,
                 latitude: $("#"+tile_id).attr('lat'),
                 longitude: $("#"+tile_id).attr('lng'),
-              })
+                name: concept_name
+              });
             } else {
               self.inactive_tile_cache.push(tile_id);
             }
@@ -229,8 +236,16 @@ export default {
             // console.log('---PREDICTION '+i+' --'+tile_ids[i]+'--'+tile_urls[i]);
             // console.log(output);
 
-            if (output.data.concepts[0].value >= 0.7 || output.data.concepts[1].value >= 0.7
-                || output.data.concepts[2].value >= 0.7) {
+            // find an accurate concept classification
+            var concept_name = undefined;
+            output.data.concepts.forEach(function(concept, j) {
+              // console.log(output);              
+              if (concept.value >= 0.7 ) {
+                concept_name = concept.name
+              }
+            });
+            // console.log(concept_name);
+            if (concept_name) {
               // highlight the inferred tiles & cache them
               $("#"+tile_ids[i]).addClass("tile_active");
               self.active_tile_cache.push(tile_ids[i]);
@@ -239,7 +254,8 @@ export default {
                 tile_id: tile_ids[i],
                 latitude: $("#"+tile_ids[i]).attr('lat'),
                 longitude: $("#"+tile_ids[i]).attr('lng'),
-              })
+                name: concept_name
+              });
             } else {
               self.inactive_tile_cache.push(tile_ids[i]);
             }
@@ -280,18 +296,69 @@ export default {
         "features": []
       }
 
+      var feature_name = "";
       this.searchResults.forEach(function(feature, i) {
         var j = {
             "type": "Feature",
-            "properties": {},
+            "properties": {
+              "marker-color": "#7e7e7e",
+              "marker-size": "medium",
+              "name": feature.name
+            },
             "geometry": {
               "type": "Point",
               "coordinates": [Number(feature.longitude), Number(feature.latitude)]
             }
           };
+        feature_name = feature.name;
         featureCollection.features.push(j);
       });
-      return this.downloadObject(featureCollection,'geojson');
+      return this.downloadObject(featureCollection,'geojson_'+feature_name);
+    },
+    createEsriFeatureSet: function() {
+        var featureSet = {
+          "spatialReference": {
+            "wkid": 4326
+          },
+          "fields": [
+            {
+              "alias": "OBJECTID",
+              "name": "OBJECTID",
+              "type": "esriFieldTypeOID",
+              "editable": false
+            },
+            {
+              "alias": "Name",
+              "name": "name",
+              "length": 255,
+              "type": "esriFieldTypeString",
+              "editable": true
+            },
+          ],
+          "objectIdField": "OBJECTID",
+          "geometryType": "esriGeometryPoint",
+          "features": []
+        }
+        var feature_name = "";
+        this.searchResults.forEach(function(feature, i) {
+          var j = {
+            "geometry": {
+              "x": Number(feature.longitude),
+              "y": Number(feature.latitude),
+              "spatialReference": {
+                "wkid": 4326
+              }
+            },
+            "attributes": {
+              "OBJECTID": i,
+              "name": feature.name
+            }
+          }
+          feature_name = feature.name;
+          featureSet.features.push(j);
+        });
+
+        return this.downloadObject(featureSet,'featureset_'+feature_name);
     },
     downloadObject: function(exportObj, exportName) {
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
